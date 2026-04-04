@@ -1,7 +1,6 @@
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-
 [project]
 name = "my_package"
 version = "0.1.0"
@@ -9,3 +8,15 @@ dependencies = [] # Add external libs here
 
 [tool.setuptools.packages.find]
 where = ["src"]
+[project]
+name = "kraken-alt-hash"
+version = "0.1.0"
+authors = [
+  {name="Pavel Ugreninov"},
+  {name="Daniil Smutin"}
+]
+dependencies = [
+  "pytest",
+  "matplotlib",
+  "numpy"
+]
