@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/my_package/__init__.py
+src/my_package/core.py
+src/my_package.egg-info/PKG-INFO
+src/my_package.egg-info/SOURCES.txt
+src/my_package.egg-info/dependency_links.txt
+src/my_package.egg-info/top_level.txt
+tests/test.core.py
