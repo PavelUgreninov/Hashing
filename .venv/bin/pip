@@ -1,4 +1,4 @@
-#!/home/pavel/Project/.venv/bin/python
+#!/home/pavel/PycharmProjects/Hashing/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

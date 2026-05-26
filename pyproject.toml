@@ -1,12 +1,27 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
 [project]
-name = "kraken-alt-hash"
+name = "kraken_alt_hash"
 version = "0.1.0"
 authors = [
-  {name="Pavel Ugreninov"},
-  {name="Daniil Smutin"}
+  {name="Pavel Ugreninov", email="ugrnpavel@gmail.com"},
+  {name="Daniil Smutin"},
 ]
+description = "An alternative for kraken2 hashing implementation"
+requires-python = ">=3.9"
 dependencies = [
   "pytest",
   "matplotlib",
-  "numpy"
+  "numpy",
+  "pandas",
+  "mmh3",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
