@@ -6,7 +6,7 @@ import hashing
 from hashing import HashTable, GeneralizedHash
 
 def kmer2hash(filename, hash_func):
-    """ Преобразует файл с k-мерами в объект HashTable """
+    """ Transform a .txt file with kmers into a hash table"""
     ht = HashTable()
     gen_id = os.path.basename(filename).replace('_kmers.txt', '')
 
@@ -34,11 +34,11 @@ if __name__ == "__main__":
 
     parser.add_argument('-f', '--kmer_files', nargs='+', required=True)
     parser.add_argument('-o', '--output', required=True)
-    parser.add_argument('-H', '--hash_function', required=True)
-    parser.add_argument('-s', '--seed', nargs='+', type=int, required=False, default=None)
-    parser.add_argument('-m', '--minimizer', nargs=2, type=int, required=False, default=None)
-    parser.add_argument('-p', '--polyhash', type=int, required=False, default=None)
-    parser.add_argument('-n', '--iterations', type=int, required=False, default=1)
+    parser.add_argument('-H', '--hash_function', required=True, help='Hash function to use, provide any of the following: murmur, encode2bit, polynomial_hash, hash_family')
+    parser.add_argument('-s', '--seed', nargs='+', type=int, required=False, default=None, help='Enable masked mode, provide a list of positions to exclude from hashing')
+    parser.add_argument('-m', '--minimizer', nargs=2, type=int, required=False, default=None, help='Enable minimizer modem requires two integers: the len of a minimizer and the number of minimizers that will be used for hashing')
+    parser.add_argument('-p', '--polyhash', type=int, required=False, default=None, help='Turn on hash family mode,take an integer as the number of hash functions to create')
+    parser.add_argument('-n', '--iterations', type=int, required=False, default=1, help='Number of iterations for speed benchmarking')
     parser.add_argument('-S', '--global_seed', type=int, default=None, required=False, help='Seed for reproducibility across separate runs')
 
     args = parser.parse_args()

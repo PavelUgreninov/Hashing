@@ -50,7 +50,7 @@ def rc(seq):
     DNA_TRANS = str.maketrans("ACGT", "TGCA")
     return seq.translate(DNA_TRANS)[::-1]
 
-lut = np.zeros(256, dtype=np.uint64)  # Use uint64 to prevent overflow during dot product
+lut = np.zeros(256, dtype=np.uint64)
 lut[ord('A')] = 0
 lut[ord('C')] = 1
 lut[ord('G')] = 2
@@ -164,7 +164,6 @@ def minimizer_hash_masked(seq: str, w: int, skip_positions: list, base_hash, var
     results = []
 
     for kmer in chosen:
-        # Faster masking using precomputed indices (no membership checks)
         masked_kmer = "".join(kmer[i] for i in keep_idx)
         results.append(base_hash(masked_kmer))
 

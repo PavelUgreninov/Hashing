@@ -7,7 +7,7 @@ def load_hashes_from_csv(filepath):
 
     hashes = set()
     with open(filepath, "r", encoding="utf-8") as f:
-        next(f, None)  # Skip header row
+        next(f, None)
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
             if row:
@@ -53,7 +53,7 @@ def run_paired_inference(output_file, ref_files, test_files):
             )
 
     heatmap.to_csv(output_file)
-    print(f"Success! Stats saved to {output_file}")
+    print(f"Stats saved to {output_file}")
 
 
 if __name__ == "__main__":

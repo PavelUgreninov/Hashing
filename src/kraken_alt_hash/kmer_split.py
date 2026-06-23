@@ -42,22 +42,18 @@ if __name__ == "__main__":
 
     for fasta_path in args.fasta_files:
 
-        # Check that fasta files exist
         if not os.path.exists(fasta_path):
             print(f"Warning: File {fasta_path} not found. Skipping.")
             continue
 
         print(f"Processing: {fasta_path}...")
 
-        # Extract filename and combine with the output directory
         base_name = os.path.basename(fasta_path).split('.fna.gz')[0]
         output_name = os.path.join(args.output, f"{base_name}_kmers.txt")
 
-        # Check that the output directory exists, otherwise, create it
         if not os.path.exists(args.output):
             os.makedirs(args.output)
 
-        # Write down the k-mer size and every k-mers each on a separate line
         with open(output_name, 'w') as f:
             f.write(f"K-mer size: {kmer_size}\n")
             for kmer in split_kmers(fasta_path, kmer_size):
