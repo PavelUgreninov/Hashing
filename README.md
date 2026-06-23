@@ -26,13 +26,13 @@ Apply different hashing functions to k-mers, enabling masking or usage of minimi
 
 **Usage:**
 ```bash
-python kmer2hash.py -H murmur3 -s <space-separated list of skip-positions> -m <minimizer_length #_of_minimizers> -f <.txt files> -o <output directory>
+python kmer2hash.py -H <hash function> -s <space-separated list of skip-positions> -m <minimizer_length #_of_minimizers> -f <.txt files> -o <output directory>
 ```
 
 **Parameters:**
 | Parameter | Description |
 |-----------|-------------|
-| `-H` | Hashing function (e.g., `murmur3`) |
+| `-H` | Hashing function (e.g., murmur3, encode2bit, polynomial_hash, hash_family) |
 | `-s` | Space-separated list of skip positions |
 | `-m` | Minimizer length and number of minimizers |
 | `-f` | Input `.txt` files |
