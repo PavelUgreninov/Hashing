@@ -1,6 +1,12 @@
 # Hashing Module
 
-This package is developed for applying different hashing approaches to genomic data and analysing the Jaccard similarity of the resulting hash tables.
+This package provides a comprehensive framework for applying and evaluating different hashing approaches to genomic data. It enables the analysis of Jaccard similarity between resulting hash tables, offering an intuitive workflow for benchmarking hashing functions across various configurations.
+
+The module facilitates the validation of hashing strategies in genomic contexts by enabling researchers to:
+- **Benchmark** different hashing functions and parameters
+- **Assess** the discriminative power of hash-based representations across species
+- **Generate** similarity matrices that inform the development of novel approaches
+- **Create** training data for annotating metagenomic classifiers
 
 ## Scripts Overview
 
