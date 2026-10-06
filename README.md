@@ -23,8 +23,8 @@ python split.py -k <kmer_size> -f <.fna.gz files> -o <output directory>
 |-----------|-------------|
 | `-k` | K-mer size |
 | `-f` | Input `.fna.gz` files |
+| `-g a b` | Spaced k-mer generation (a nucleotides before b gap) |
 | `-o` | Output directory |
-
 ---
 
 ### 2. kmer2hash.py
