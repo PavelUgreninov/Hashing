@@ -67,3 +67,65 @@ class TestHashtable:
         ht.sort()
         assert list(ht.table.keys()) == sorted(ht.table.keys())
 
+
+
+# ---------------------------------------------------------------- regression tests for the fixes
+import gzip
+import random
+from kraken_alt_hash import kmer_split
+
+
+def _write_fna(path, records):
+    with gzip.open(path, "wt") as f:
+        for i, seq in enumerate(records):
+            f.write(f">r{i}\n")
+            for j in range(0, len(seq), 60):
+                f.write(seq[j:j + 60] + "\n")
+
+
+def _random_dna(n, seed=0):
+    rnd = random.Random(seed)
+    return "".join(rnd.choice("ACGT") for _ in range(n))
+
+
+class TestFixes:
+    def test_generalized_hash_eq_compares_other(self):
+        a = hashing.GeneralizedHash("x", lambda s: (1, 2, 3))
+        b = hashing.GeneralizedHash("y", lambda s: (7, 8, 9))
+        assert not (a == b)          # used to be True (min(self) == min(self))
+        assert a == hashing.GeneralizedHash("z", lambda s: (1, 5, 6))
+
+    @pytest.mark.parametrize("k,gap", [(21, None), (21, (1, 1)), (21, (2, 1)), (22, (3, 1)), (20, (2, 1))])
+    def test_spaced_kmers_strand_symmetric(self, tmp_path, k, gap):
+        g = _random_dna(3000)
+        _write_fna(tmp_path / "a.fna.gz", [g])
+        _write_fna(tmp_path / "b.fna.gz", [kmer_split.rc(g)])
+        A = set(kmer_split.split_kmers(str(tmp_path / "a.fna.gz"), k, gap))
+        B = set(kmer_split.split_kmers(str(tmp_path / "b.fna.gz"), k, gap))
+        assert A == B and len(A) > 0
+
+    def test_ambiguous_bases_skipped(self, tmp_path):
+        seq = "ACGTACGTAC" + "N" + "GTACGTACGT"
+        _write_fna(tmp_path / "n.fna.gz", [seq])
+        kmers = list(kmer_split.split_kmers(str(tmp_path / "n.fna.gz"), 5))
+        assert all(set(x) <= set("ACGT") for x in kmers)
+        assert len(kmers) == 2 * (10 - 5 + 1)   # windows overlapping the N are dropped
+
+    def test_records_do_not_overlap(self, tmp_path):
+        _write_fna(tmp_path / "r.fna.gz", ["ACGTA", "CGTAC"])
+        assert len(list(kmer_split.split_kmers(str(tmp_path / "r.fna.gz"), 5))) == 2
+
+    @pytest.mark.parametrize("func", [hashing.murmur3_masked, hashing.encode2bit_masked, hashing.polynomial_hash_masked])
+    def test_masked_hash_strand_symmetric(self, func):
+        s = _random_dna(30, seed=3)
+        skip = (3, 7, 12)
+        assert func(s, skip_positions=skip) == func(kmer_split.rc(s), skip_positions=skip)
+
+    def test_masked_minimizer_runs_and_orders(self):
+        s = _random_dna(30, seed=5)
+        for order in ("lex", "hash"):
+            v1 = hashing.minimizer_hash(s, 10, hashing.encode2bit, var=2, order=order)
+            v2 = hashing.minimizer_hash_masked(s, 10, [2, 5], hashing.encode2bit, var=2, order=order)
+            assert len(v1) == 2 and len(v2) == 2
+        with pytest.raises(ValueError):
+            hashing.minimizer_hash(s, 10, hashing.encode2bit, order="nope")

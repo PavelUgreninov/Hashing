@@ -37,8 +37,27 @@ def spaced_offsets(k, gap=None):
     return offsets
 
 
+ACGT = frozenset("ACGT")
+
+
+def canonical_spaced(window, offsets):
+    """
+    Strand-independent (spaced) k-mer of a window.
+
+    The pattern is applied to the window AND to its reverse complement and the
+    lexicographically smaller sample is returned. (Taking min(kmer, rc(kmer))
+    of the sampled string is only correct for palindromic patterns: otherwise
+    the same locus gives different k-mers on the two strands.)
+    """
+    fwd = "".join(window[i] for i in offsets)
+    rev_window = rc(window)
+    rev = "".join(rev_window[i] for i in offsets)
+    return fwd if fwd <= rev else rev
+
+
 def split_kmers(fasta_file, k, gap=None):
-    """ Return the generator of lexicographically smaller (spaced) kmers """
+    """ Return the generator of canonical (spaced) kmers; windows with
+    ambiguous bases (N, IUPAC codes) are skipped """
     offsets = spaced_offsets(k, gap)
     span = offsets[-1] + 1  # length of the window covered by the pattern
 
@@ -56,9 +75,11 @@ def split_kmers(fasta_file, k, gap=None):
 
             start = 0
             while start + span <= len(window):
-                kmer = "".join(window[start + i] for i in offsets)
-                yield min(kmer, rc(kmer))
+                sub = window[start:start + span]
                 start += 1
+                if not ACGT.issuperset(sub):
+                    continue  # ambiguous base inside the window
+                yield canonical_spaced(sub, offsets)
 
             window = window[start:]  # keep the last span-1 characters
 

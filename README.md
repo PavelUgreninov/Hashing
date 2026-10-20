@@ -10,12 +10,12 @@ The module facilitates the validation of hashing strategies in genomic contexts 
 
 ## Scripts Overview
 
-### 1. split.py
+### 1. kmer_split.py
 Split genome into canonical k-mers of the defined length and write them as a simple `.txt` file.
 
 **Usage:**
 ```bash
-python split.py -k <kmer_size> -f <.fna.gz files> -o <output directory>
+python kmer_split.py -k <kmer_size> -f <.fna.gz files> -o <output directory>
 ```
 
 **Parameters:**
@@ -41,6 +41,7 @@ python kmer2hash.py -H <hash function> -s <space-separated list of skip-position
 | `-H` | Hashing function (e.g., murmur3, encode2bit, polynomial_hash, hash_family) |
 | `-s` | Space-separated list of skip positions |
 | `-m` | Minimizer length and number of minimizers |
+| `-O` | Minimizer order: `lex` (default) or `hash` (murmur3 of the l-mer) |
 | `-f` | Input `.txt` files |
 | `-p` | Number of universal hash functions (works only with "hashing_family" hashing function) |
 | `-S` | Specifies random seed for creating universal hash functions (works only with "hashing_family" hashing function) |
@@ -69,7 +70,7 @@ python kmer_infer.py -r <reference tables> -t <test tables> -o <output.csv>
 
 1. Split genomes into k-mers:
    ```bash
-   python split.py -k 30 -f genome.fna.gz -o kmers/
+   python kmer_split.py -k 30 -f genome.fna.gz -o kmers/
    ```
 
 2. Generate hash tables:
