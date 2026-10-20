@@ -2,8 +2,12 @@ import os
 import argparse
 import functools
 import pandas as pd
-import hashing
-from hashing import HashTable, GeneralizedHash
+try:
+    from kraken_alt_hash import hashing
+    from kraken_alt_hash.hashing import HashTable, GeneralizedHash
+except ImportError:  # run as a plain script from inside the folder
+    import hashing
+    from hashing import HashTable, GeneralizedHash
 
 def kmer2hash(filename, hash_func):
     """ Transform a .txt file with kmers into a hash table"""
@@ -34,10 +38,11 @@ if __name__ == "__main__":
 
     parser.add_argument('-f', '--kmer_files', nargs='+', required=True)
     parser.add_argument('-o', '--output', required=True)
-    parser.add_argument('-H', '--hash_function', required=True, help='Hash function to use, provide any of the following: murmur, encode2bit, polynomial_hash, hash_family')
+    parser.add_argument('-H', '--hash_function', required=True, help='Hash function to use, provide any of the following: murmur3, encode2bit, polynomial_hash, hash_family')
     parser.add_argument('-s', '--seed', nargs='+', type=int, required=False, default=None, help='Enable masked mode, provide a list of positions to exclude from hashing')
     parser.add_argument('-m', '--minimizer', nargs=2, type=int, required=False, default=None, help='Enable minimizer modem requires two integers: the len of a minimizer and the number of minimizers that will be used for hashing')
     parser.add_argument('-p', '--polyhash', type=int, required=False, default=None, help='Turn on hash family mode,take an integer as the number of hash functions to create')
+    parser.add_argument('-O', '--order', choices=['lex', 'hash'], default='lex', help='Minimizer ordering: lexicographic (default) or murmur3 hash of the l-mer')
     parser.add_argument('-n', '--iterations', type=int, required=False, default=1, help='Number of iterations for speed benchmarking')
     parser.add_argument('-S', '--global_seed', type=int, default=None, required=False, help='Seed for reproducibility across separate runs')
 
@@ -76,11 +81,12 @@ if __name__ == "__main__":
         if args.seed is not None:
 
             selected_hash_func = lambda seq: hashing.minimizer_hash_masked(
-                seq, base_hash=minimizer_base, skip_positions=args.seed, w=w_size, var=num_var
+                seq, base_hash=minimizer_base, skip_positions=args.seed, w=w_size, var=num_var,
+                order=args.order
             )
         else:
             selected_hash_func = lambda seq: hashing.minimizer_hash(
-                seq, base_hash=minimizer_base, w=w_size, var=num_var
+                seq, base_hash=minimizer_base, w=w_size, var=num_var, order=args.order
             )
     else:
         selected_hash_func = base

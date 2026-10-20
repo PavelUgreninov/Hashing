@@ -17,7 +17,7 @@ class GeneralizedHash:
         if not isinstance(other, GeneralizedHash):
             return False
         if isinstance(self.value, Iterable) and isinstance(other.value, Iterable):
-            return min(self.value) == min(self.value)
+            return min(self.value) == min(other.value)
         return self.value == other.value
 
             # correct! for example, for list - compare all / min / etc depend on self.hash_func
@@ -50,6 +50,19 @@ def rc(seq):
     DNA_TRANS = str.maketrans("ACGT", "TGCA")
     return seq.translate(DNA_TRANS)[::-1]
 
+def masked_canonical(seq, skip_positions):
+    """
+    Remove skip_positions from seq and from its reverse complement and return
+    the smaller result. This makes a masked k-mer a true spaced seed that is
+    identical for both strands (masking an already canonicalised k-mer gives a
+    pattern that flips from k-mer to k-mer).
+    """
+    skip = set(skip_positions)
+    fwd = "".join(c for i, c in enumerate(seq) if i not in skip)
+    rev = "".join(c for i, c in enumerate(rc(seq)) if i not in skip)
+    return fwd if fwd <= rev else rev
+
+
 lut = np.zeros(256, dtype=np.uint64)
 lut[ord('A')] = 0
 lut[ord('C')] = 1
@@ -69,20 +82,9 @@ def encode2bit(seq):
     return int(np.dot(arr, powers))
 
 def encode2bit_masked(seq, skip_positions=None):
-    arr = lut[np.frombuffer(seq.encode('ascii'), dtype=np.uint8)]
-
     if skip_positions:
-        keep_mask = np.ones(len(arr), dtype=bool)
-        keep_mask[skip_positions] = False
-        arr = arr[keep_mask]
-    k_effective = len(arr)
-
-    if k_effective == 0: return 0
-
-    shifts = np.arange(k_effective - 1, -1, -1, dtype=np.uint64)
-    powers = np.left_shift(1, 2 * shifts)  # Equivalent to 4**shifts
-
-    return int(np.dot(arr, powers))
+        seq = masked_canonical(seq, skip_positions)
+    return encode2bit(seq)
 
 lut_14 = np.zeros(256, dtype=np.uint64)
 lut_14[ord('A')], lut_14[ord('C')], lut_14[ord('G')], lut_14[ord('T')] = 1, 2, 3, 4
@@ -98,38 +100,35 @@ def polynomial_hash(seq, p=5, m=(1 << 61) - 1):
 
 
 def polynomial_hash_masked(seq, skip_positions=None, p=5, m=(1 << 61) - 1):
-    arr = lut_14[np.frombuffer(seq.encode('ascii'), dtype=np.uint8)]
-
-    if skip_positions is not None:
-        mask = np.ones(len(arr), dtype=bool)
-        mask[skip_positions] = False
-        arr_masked = arr[mask]
-    else:
-        arr_masked = arr
-
-    hash_val = 0
-    for val in reversed(arr_masked.tolist()):
-        hash_val = (hash_val * p + val) % m
-
-    return hash_val
+    if skip_positions:
+        seq = masked_canonical(seq, skip_positions)
+    return polynomial_hash(seq, p=p, m=m)
 
 def murmur3(data, seed=0):
     res = mmh3.hash(data)
     return res
 
 def murmur3_masked(data, skip_positions, seed=0):
-    skip_set = set(skip_positions)
-    masked_kmer = "".join([char for i, char in enumerate(data) if i not in skip_set])
-    return mmh3.hash(masked_kmer)
+    return mmh3.hash(masked_canonical(data, skip_positions))
 
 
-def minimizer_hash(seq: str, w: int, base_hash, var=1):
+def _window_order(order):
+    """Sort key for choosing minimizers: plain lexicographic (biased towards
+    A-rich l-mers) or the murmur3 hash of the l-mer (pseudo-random order)."""
+    if order == "lex":
+        return None
+    if order == "hash":
+        return lambda s: mmh3.hash(s, signed=False)
+    raise ValueError("order must be 'lex' or 'hash'")
+
+
+def minimizer_hash(seq: str, w: int, base_hash, var=1, order="lex"):
     num_windows = len(seq) - w + 1
     if num_windows <= 0:
         return None if var == 1 else tuple()
 
     windows = [seq[i:i + w] for i in range(num_windows)]
-    windows.sort()
+    windows.sort(key=_window_order(order))
 
     if var == 1:
         return base_hash(windows[0])
@@ -138,22 +137,12 @@ def minimizer_hash(seq: str, w: int, base_hash, var=1):
 
     return tuple(base_hash(kmer) for kmer in chosen)
 
-def minimizer_hash_masked(seq: str, w: int, skip_positions: list, base_hash, var=1):
+def minimizer_hash_masked(seq: str, w: int, skip_positions: list, base_hash, var=1, order="lex"):
     num_windows = len(seq) - w + 1
     if num_windows <= 0:
         return None if var == 1 else tuple()
     windows = [seq[i:i + w] for i in range(num_windows)]
-    windows.sort()
-
-    if var == 1:
-        chosen = [windows[0]]
-    else:
-        chosen = windows[:var] if isinstance(var, int) else windows
-
-    skip_set = set(skip_positions)
-    keep_idx = [i for i in range(w) if i not in skip_set]
-    windows = [seq[i:i + w] for i in range(num_windows)]
-    windows.sort()
+    windows.sort(key=_window_order(order))
 
     # Select minimizers
     if var == 1:
@@ -164,8 +153,7 @@ def minimizer_hash_masked(seq: str, w: int, skip_positions: list, base_hash, var
     results = []
 
     for kmer in chosen:
-        masked_kmer = "".join(kmer[i] for i in keep_idx)
-        results.append(base_hash(masked_kmer))
+        results.append(base_hash(masked_canonical(kmer, skip_positions)))
 
     return results[0] if var == 1 else tuple(results)
 
